@@ -1,0 +1,42 @@
+# COOLIFY compose (Docker Compose build pack) — ONE service built from the root Dockerfile:
+# the API serves the SPA on the same domain, Coolify's proxy (Traefik) terminates TLS.
+# In Coolify set the `app` service domain WITH the container port, e.g.
+#   https://www.industrial.talentooo.com:4000
+# Manual VPS with its own nginx + certbot: docker-compose.vps.yml. See docs/DEPLOY.md.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    restart: unless-stopped
+    environment:
+      # Required — boot refuses a missing/default secret in production.
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      APP_URL: ${APP_URL}
+      # Seeds an EMPTY DB only (demo accounts + initiatives); later boots apply versioned seed
+      # updates (new accounts / Shams content) without touching edited data. 0 = clean empty DB.
+      SEED_ON_BOOT: ${SEED_ON_BOOT:-1}
+      # Message center — Gmail reminders (empty GMAIL_* = email disabled)
+      GMAIL_USER: ${GMAIL_USER:-}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD:-}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-المنصة الوطنية للتمويل والمبادرات الصناعية}
+      CHAT_REMINDER_DELAY_MIN: ${CHAT_REMINDER_DELAY_MIN:-15}
+      CHAT_MAX_FILE_MB: ${CHAT_MAX_FILE_MB:-20}
+      # Database driver: sqlite (default, /data volume below) or mysql (shared server).
+      # sqlite needs nothing else; mysql needs MYSQL_* + reachable host (see docs/MYSQL_MIGRATION.md).
+      DB_DRIVER: ${DB_DRIVER:-sqlite}
+      MYSQL_HOST: ${MYSQL_HOST:-}
+      MYSQL_PORT: ${MYSQL_PORT:-3306}
+      MYSQL_USER: ${MYSQL_USER:-}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-}
+      MYSQL_POOL_SIZE: ${MYSQL_POOL_SIZE:-10}
+    # SQLite + uploads + backups. Fresh named volume → inherits the image's node:node ownership.
+    volumes:
+      - app-data:/data
+    expose:
+      - "4000"
+
+volumes:
+  app-data:

@@ -1,0 +1,8 @@
+# Only used if frontend/ is ever built as its own context. The images now build from the
+# repo root (frontend imports ../contracts), so the ROOT .dockerignore is what applies.
+node_modules
+dist
+.env
+.env.*
+*.log
+coverage
